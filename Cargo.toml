@@ -1,0 +1,16 @@
+[package]
+authors = ["Sebastian Woetzel <wose@zuendmasse.de>"]
+categories = ["embedded", "hardware-support", "no-std"]
+description = "A platform agnostic driver to interface with the Si7021 humidity and temperature sensor"
+keywords = ["embedded-hal", "humidity", "temperature"]
+license = "MIT OR Apache-2.0"
+name = "si7021"
+repository = "https://github.com/wose/si7021"
+version = "0.1.0"
+
+[dependencies]
+embedded-hal = "0.1.0"
+
+[dev-dependencies.linux-embedded-hal]
+git = "https://github.com/wose/linux-embedded-hal"
+branch = "feature/i2c"

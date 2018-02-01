@@ -7,7 +7,10 @@
 
 - [X] measure and read humidity
 - [X] measure and read temperature
+- [ ] support HTU2xD(F)
+- [ ] support SHT2x
 - [ ] measure humidity and read both humidity and temperature
+- [ ] use checksum
 - [ ] reset
 - [ ] modify user register
 - [ ] control heater

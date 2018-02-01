@@ -9,7 +9,7 @@
 - [X] measure and read temperature
 - [ ] support HTU2xD(F)
 - [ ] support SHT2x
-- [ ] measure humidity and read both humidity and temperature
+- [X] measure humidity and read both humidity and temperature
 - [ ] use checksum
 - [ ] reset
 - [ ] modify user register

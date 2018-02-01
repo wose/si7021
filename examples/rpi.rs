@@ -12,8 +12,7 @@ fn main() {
     let mut si7021 = Si7021::new(dev, Delay);
 
     for _ in 0..100 {
-        let humidity = si7021.humidity().unwrap();
-        let temperature = si7021.temperature().unwrap();
+        let (humidity, temperature) = si7021.humidity_temperature().unwrap();
         println!("{:>6.2}% {:6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
         thread::sleep(Duration::from_secs(1));
     }

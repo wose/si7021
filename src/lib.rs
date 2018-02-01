@@ -57,6 +57,16 @@ where
     }
 
     /// Starts a humidity measurement and waits for it to finish before
+    /// returning the measured value together with the temperature without
+    /// doing a separate temperature measurement.
+    pub fn humidity_temperature(&mut self) -> Result<(u16, i16), E> {
+        let humidity = self.humidity()?;
+        self.i2c.write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])?;
+        let temperature = convert_temperature(self.read_u16()?);
+        Ok((humidity, temperature))
+    }
+
+    /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value.
     pub fn humidity(&mut self) -> Result<u16, E> {
         self.i2c.write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])?;
@@ -66,14 +76,8 @@ where
         // max(t_conv(T)) = 10.8ms
         self.delay.delay_ms(23);
 
-        let mut buffer = [0, 0];
-        self.i2c.read(ADDRESS, &mut buffer)?;
-        let rh_code = ((buffer[0] as u32) << 8) + (buffer[1] as u32);
-        let humidity = ((12500 * rh_code) >> 16) as i16 - 600;
-
-        // sensor may report slightly more than 100% or less than 0 so we clamp it
-        let humidity = cmp::min(cmp::max(humidity, 0), 10000) as u16;
-        Ok(humidity)
+        let rh_code = self.read_u16()?;
+        Ok(convert_humidity(rh_code))
     }
 
     /// Starts a temperature measurement and waits for it to finish before
@@ -85,10 +89,24 @@ where
         // max(t_conv(T)) = 10.8ms
         self.delay.delay_ms(11);
 
+        let temp_code = self.read_u16()?;
+        Ok(convert_temperature(temp_code))
+    }
+
+    fn read_u16(&mut self) -> Result<u16, E> {
         let mut buffer = [0, 0];
         self.i2c.read(ADDRESS, &mut buffer)?;
-        let temp_code = ((buffer[0] as u32) << 8) + (buffer[1] as u32);
-        let temperature = ((17572 * temp_code) >> 16) as i16 - 4685;
-        Ok(temperature)
+        Ok(((buffer[0] as u16) << 8) + (buffer[1] as u16))
     }
+}
+
+fn convert_humidity(rh_code: u16) -> u16 {
+    let humidity = ((12500 * rh_code as u32) >> 16) as i16 - 600;
+
+    // sensor may report slightly more than 100% or less than 0 so we clamp it
+    cmp::min(cmp::max(humidity, 0), 10000) as u16
+}
+
+fn convert_temperature(temp_code: u16) -> i16 {
+    ((17572 * temp_code as u32) >> 16) as i16 - 4685
 }

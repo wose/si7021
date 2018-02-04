@@ -77,7 +77,7 @@ pub struct Si7021<I2C, D> {
     delay: D,
 }
 
-impl <I2C, D, E> Si7021<I2C, D>
+impl<I2C, D, E> Si7021<I2C, D>
 where
     I2C: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
     D: DelayMs<u8>,
@@ -92,7 +92,8 @@ where
     /// doing a separate temperature measurement.
     pub fn humidity_temperature(&mut self) -> Result<(u16, i16), E> {
         let humidity = self.humidity()?;
-        self.i2c.write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])?;
+        self.i2c
+            .write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])?;
         let temperature = convert_temperature(self.read_u16()?);
         Ok((humidity, temperature))
     }
@@ -100,7 +101,8 @@ where
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value.
     pub fn humidity(&mut self) -> Result<u16, E> {
-        self.i2c.write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])?;
+        self.i2c
+            .write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])?;
 
         // wait for total conversion time t_conv(RH) + t_conv(T)
         // max(t_conv(RH)) = 12ms
@@ -114,7 +116,8 @@ where
     /// Starts a temperature measurement and waits for it to finish before
     /// returning the measured value.
     pub fn temperature(&mut self) -> Result<i16, E> {
-        self.i2c.write(ADDRESS, &[Command::MeasureTempNoHoldMaster.cmd()])?;
+        self.i2c
+            .write(ADDRESS, &[Command::MeasureTempNoHoldMaster.cmd()])?;
 
         // wait for temperature conversion time t_conv(T)
         // max(t_conv(T)) = 10.8ms
@@ -134,7 +137,8 @@ where
     /// Sets the measurement resolution.
     pub fn set_resolution(&mut self, res: Resolution) -> Result<(), E> {
         let reg = self.read_user_reg()? & 0x7E | res.res();
-        self.i2c.write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
+        self.i2c
+            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
         Ok(())
     }
 
@@ -143,11 +147,11 @@ where
         let reg = self.read_user_reg()?;
 
         match reg & 0x81 {
-            0 => Ok(Resolution::RH12Temp14),
-            1 => Ok(Resolution::RH8Temp12),
+            0x00 => Ok(Resolution::RH12Temp14),
+            0x01 => Ok(Resolution::RH8Temp12),
             0x80 => Ok(Resolution::RH10Temp13),
             0x81 => Ok(Resolution::RH11Temp11),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -161,7 +165,8 @@ where
 
     fn read_user_reg(&mut self) -> Result<u8, E> {
         let mut buffer = [0];
-        self.i2c.write_read(ADDRESS, &[Command::ReadUserReg1.cmd()], &mut buffer)?;
+        self.i2c
+            .write_read(ADDRESS, &[Command::ReadUserReg1.cmd()], &mut buffer)?;
         Ok(buffer[0])
     }
 

@@ -209,6 +209,7 @@ where
     /// - `0x0D = 13`: Si7013
     /// - `0x14 = 20`: Si7020
     /// - `0x15 = 21`: Si7021
+    /// - `0x32 = 50`: HTU21D/SHT21
     pub fn serial(&mut self) -> Result<[u8; 8], E> {
         let mut serial = [0u8; 8];
         let mut buffer = [0u8; 8];

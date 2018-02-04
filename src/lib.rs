@@ -40,6 +40,16 @@ impl Command {
     }
 }
 
+/// Firmware Version
+pub enum FirmwareVersion {
+    /// Version 1.0
+    V1_0,
+    /// Version 2.0
+    V2_0,
+    /// Unknown Version
+    Unknown(u8),
+}
+
 /// Si7021 Driver
 pub struct Si7021<I2C, D> {
     i2c: I2C,
@@ -91,6 +101,53 @@ where
 
         let temp_code = self.read_u16()?;
         Ok(convert_temperature(temp_code))
+    }
+
+    /// Reads the 64bit serial number and returns it as 8 bytes.
+    ///
+    /// - `buf[0]`: SNA_3
+    /// - `buf[1]`: SNA_2
+    /// - ...
+    /// - `buf[7]`: SNB_0
+    ///
+    /// SNB_3 (`buf[4]`) contains the sensor id:
+    ///
+    /// - `0x00` or `0xFF`: engineering samples
+    /// - `0x0D = 13`: Si7013
+    /// - `0x14 = 20`: Si7020
+    /// - `0x15 = 21`: Si7021
+    pub fn serial(&mut self) -> Result<[u8; 8], E> {
+        let mut serial = [0u8; 8];
+        let mut buffer = [0u8; 8];
+        self.i2c.write(ADDRESS, &[0xFA, 0x0F])?;
+        self.i2c.read(ADDRESS, &mut buffer)?;
+        serial[0] = buffer[0];
+        serial[1] = buffer[2];
+        serial[2] = buffer[4];
+        serial[3] = buffer[6];
+
+        self.i2c.write(ADDRESS, &[0xFC, 0xC9])?;
+        self.i2c.read(ADDRESS, &mut buffer)?;
+        serial[4] = buffer[0];
+        serial[5] = buffer[2];
+        serial[6] = buffer[4];
+        serial[7] = buffer[6];
+        Ok(serial)
+    }
+
+    /// Reads the firmware revision.
+    ///
+    /// - `0xFF`: Firmware version 1.0
+    /// - `0x20`: Firmware version 2.0
+    pub fn firmware_rev(&mut self) -> Result<FirmwareVersion, E> {
+        let mut buffer = [0];
+        self.i2c.write(ADDRESS, &[0x84, 0xB8])?;
+        self.i2c.read(ADDRESS, &mut buffer)?;
+        match buffer[0] {
+            0xFF => Ok(FirmwareVersion::V1_0),
+            0x20 => Ok(FirmwareVersion::V2_0),
+            ver => Ok(FirmwareVersion::Unknown(ver)),
+        }
     }
 
     fn read_u16(&mut self) -> Result<u16, E> {

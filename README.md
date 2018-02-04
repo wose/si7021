@@ -14,8 +14,8 @@
 - [ ] reset
 - [ ] modify user register
 - [ ] control heater
-- [ ] read id
-- [ ] read firmware revision
+- [X] read serial number (contains device id)
+- [X] read firmware revision
 
 ## License
 

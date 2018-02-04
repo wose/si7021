@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use hal::{Delay, I2cdev};
-use si7021::{Si7021, FirmwareVersion};
+use si7021::{Resolution, Si7021, FirmwareVersion};
 
 fn main() {
     let dev = I2cdev::new("/dev/i2c-1", si7021::ADDRESS as u16).unwrap();
@@ -30,12 +30,19 @@ fn main() {
         thread::sleep(Duration::from_secs(1));
     }
 
+    println!("Set new Resolution");
+    si7021.set_resolution(Resolution::RH8Temp12).unwrap();
+    println!("{:?}", si7021.get_resolution().unwrap());
+
     println!("Reset");
     si7021.reset().unwrap();
 
+    println!("Resolution after Reset");
+    println!("{:?}", si7021.get_resolution().unwrap());
+
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();
-        println!("{:>6.2}% {:6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        println!("{:>6.2}% {:>6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
         thread::sleep(Duration::from_secs(1));
     }
 }

@@ -50,6 +50,27 @@ pub enum FirmwareVersion {
     Unknown(u8),
 }
 
+/// Measurement Resolution
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone)]
+pub enum Resolution {
+    /// RH: 12 bit, Temp: 14 bit
+    RH12Temp14 = 0b00000000,
+    /// RH: 8 bit, Temp: 12 bit
+    RH8Temp12 = 0b00000001,
+    /// RH: 10 bit, Temp: 13 bit
+    RH10Temp13 = 0b10000000,
+    /// RH: 11 bit, Temp: 11 bit
+    RH11Temp11 = 0b10000001,
+}
+
+impl Resolution {
+    /// Get register value.
+    pub fn res(&self) -> u8 {
+        *self as u8
+    }
+}
+
 /// Si7021 Driver
 pub struct Si7021<I2C, D> {
     i2c: I2C,
@@ -108,6 +129,32 @@ where
         self.i2c.write(ADDRESS, &[Command::Reset.cmd()])?;
         self.delay.delay_ms(15);
         Ok(())
+    }
+
+    /// Sets the measurement resolution.
+    pub fn set_resolution(&mut self, res: Resolution) -> Result<(), E> {
+        let reg = self.read_user_reg()? & 0x7E | res.res();
+        self.i2c.write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
+        Ok(())
+    }
+
+    /// Returns the current measurement resolution.
+    pub fn get_resolution(&mut self) -> Result<Resolution, E> {
+        let reg = self.read_user_reg()?;
+
+        match reg & 0x81 {
+            0 => Ok(Resolution::RH12Temp14),
+            1 => Ok(Resolution::RH8Temp12),
+            0x80 => Ok(Resolution::RH10Temp13),
+            0x81 => Ok(Resolution::RH11Temp11),
+            _ => unreachable!()
+        }
+    }
+
+    fn read_user_reg(&mut self) -> Result<u8, E> {
+        let mut buffer = [0];
+        self.i2c.write_read(ADDRESS, &[Command::ReadUserReg1.cmd()], &mut buffer)?;
+        Ok(buffer[0])
     }
 
     /// Reads the 64bit serial number and returns it as 8 bytes.

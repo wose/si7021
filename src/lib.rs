@@ -219,12 +219,13 @@ where
         serial[2] = buffer[4];
         serial[3] = buffer[6];
 
+        let mut buffer = [0u8; 6];
         self.i2c.write(ADDRESS, &[0xFC, 0xC9])?;
         self.i2c.read(ADDRESS, &mut buffer)?;
         serial[4] = buffer[0];
-        serial[5] = buffer[2];
-        serial[6] = buffer[4];
-        serial[7] = buffer[6];
+        serial[5] = buffer[1];
+        serial[6] = buffer[3];
+        serial[7] = buffer[4];
         Ok(serial)
     }
 

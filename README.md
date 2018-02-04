@@ -10,8 +10,10 @@
 - [ ] support HTU2xD(F)
 - [ ] support SHT2x
 - [X] measure humidity and read both humidity and temperature
+- [ ] set humidity resolution
+- [ ] set temperature resolution
 - [ ] use checksum
-- [ ] reset
+- [X] reset
 - [ ] modify user register
 - [ ] control heater
 - [X] read serial number (contains device id)

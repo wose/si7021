@@ -103,6 +103,13 @@ where
         Ok(convert_temperature(temp_code))
     }
 
+    /// Issues a software reset.
+    pub fn reset(&mut self) -> Result<(), E> {
+        self.i2c.write(ADDRESS, &[Command::Reset.cmd()])?;
+        self.delay.delay_ms(15);
+        Ok(())
+    }
+
     /// Reads the 64bit serial number and returns it as 8 bytes.
     ///
     /// - `buf[0]`: SNA_3

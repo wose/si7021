@@ -15,6 +15,7 @@ fn main() {
     for byte in &si7021.serial().unwrap() {
         print!("{:02X} ", byte);
     }
+
     println!();
     print!("Firmware Version: ");
     match si7021.firmware_rev().unwrap() {
@@ -22,6 +23,15 @@ fn main() {
         FirmwareVersion::V2_0 => println!("V2 (0x20)"),
         FirmwareVersion::Unknown(ver) => println!("Unknown ({})", ver),
     }
+
+    for _ in 0..10 {
+        let (humidity, temperature) = si7021.humidity_temperature().unwrap();
+        println!("{:>6.2}% {:6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    println!("Reset");
+    si7021.reset().unwrap();
 
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();

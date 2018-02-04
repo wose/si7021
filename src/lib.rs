@@ -155,6 +155,32 @@ where
         }
     }
 
+    /// Sets the heater level.
+    pub fn set_heater_level(&mut self, level: u8) -> Result<(), E> {
+        self.i2c
+            .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level & 0x0F])?;
+        Ok(())
+    }
+
+    /// Enables the heater.
+    pub fn enable_heater(&mut self) -> Result<(), E> {
+        self.control_heater(0x04)?;
+        Ok(())
+    }
+
+    /// Disables the heater.
+    pub fn disable_heater(&mut self) -> Result<(), E> {
+        self.control_heater(0x00)?;
+        Ok(())
+    }
+
+    fn control_heater(&mut self, enable: u8) -> Result<(), E> {
+        let reg = self.read_user_reg()? ^ 0x04 | enable;
+        self.i2c
+            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
+        Ok(())
+    }
+
     /// Returns the VDD Status. If the operating voltage drops below 1.9 V, this
     /// will return `false`. If the operating voltage drops below 1.8 V, the device
     /// will no longer operate correctly.

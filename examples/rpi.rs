@@ -25,7 +25,7 @@ fn main() {
     }
     println!("VDD Status: {}", si7021.vdd_status().unwrap());
 
-    for _ in 0..10 {
+    for _ in 0..5 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();
         println!("{:>6.2}% {:6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
         thread::sleep(Duration::from_secs(1));
@@ -40,6 +40,19 @@ fn main() {
 
     println!("Resolution after Reset");
     println!("{:?}", si7021.get_resolution().unwrap());
+
+    println!("Heater on");
+    si7021.set_heater_level(0x0F).unwrap();
+    si7021.enable_heater().unwrap();
+
+    for _ in 0..10 {
+        let (humidity, temperature) = si7021.humidity_temperature().unwrap();
+        println!("{:>6.2}% {:>6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        thread::sleep(Duration::from_secs(1));
+    }
+
+    println!("Heater off");
+    si7021.disable_heater().unwrap();
 
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();

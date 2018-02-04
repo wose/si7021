@@ -14,7 +14,7 @@
 - [X] set temperature resolution
 - [ ] use checksum
 - [X] reset
-- [ ] control heater
+- [X] control heater
 - [X] read VDD status
 - [X] read serial number (contains device id)
 - [X] read firmware revision

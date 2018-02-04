@@ -23,6 +23,7 @@ fn main() {
         FirmwareVersion::V2_0 => println!("V2 (0x20)"),
         FirmwareVersion::Unknown(ver) => println!("Unknown ({})", ver),
     }
+    println!("VDD Status: {}", si7021.vdd_status().unwrap());
 
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();

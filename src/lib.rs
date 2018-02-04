@@ -151,6 +151,14 @@ where
         }
     }
 
+    /// Returns the VDD Status. If the operating voltage drops below 1.9 V, this
+    /// will return `false`. If the operating voltage drops below 1.8 V, the device
+    /// will no longer operate correctly.
+    pub fn vdd_status(&mut self) -> Result<bool, E> {
+        let reg = self.read_user_reg()?;
+        Ok(reg & 0x40 == 0)
+    }
+
     fn read_user_reg(&mut self) -> Result<u8, E> {
         let mut buffer = [0];
         self.i2c.write_read(ADDRESS, &[Command::ReadUserReg1.cmd()], &mut buffer)?;

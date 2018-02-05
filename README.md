@@ -12,7 +12,7 @@
 - [X] measure humidity and read both humidity and temperature
 - [X] set humidity resolution
 - [X] set temperature resolution
-- [ ] use checksum
+- [X] use checksum
 - [X] reset
 - [X] control heater
 - [X] read VDD status

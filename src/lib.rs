@@ -16,6 +16,8 @@ use core::cmp;
 use hal::blocking::delay::DelayMs;
 use hal::blocking::i2c::{Read, Write, WriteRead};
 
+const POLYNOMIAL: u32 = 0x13100;
+
 /// I2C address
 pub const ADDRESS: u8 = 0x40;
 
@@ -38,6 +40,15 @@ impl Command {
     pub fn cmd(&self) -> u8 {
         *self as u8
     }
+}
+
+/// Errors
+#[derive(Debug)]
+pub enum Error<E> {
+    /// Wrong CRC
+    Crc,
+    /// I2C bus error
+    I2c(E),
 }
 
 /// Firmware Version
@@ -90,40 +101,45 @@ where
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value together with the temperature without
     /// doing a separate temperature measurement.
-    pub fn humidity_temperature(&mut self) -> Result<(u16, i16), E> {
+    pub fn humidity_temperature(&mut self) -> Result<(u16, i16), Error<E>> {
         let humidity = self.humidity()?;
         self.i2c
-            .write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])?;
-        let temperature = convert_temperature(self.read_u16()?);
+            .write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])
+            .map_err(Error::I2c)?;
+
+        // temperature reading after humidity measurement doesn't support CRC
+        let temperature = convert_temperature(self.read_u16().map_err(Error::I2c)?);
         Ok((humidity, temperature))
     }
 
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value.
-    pub fn humidity(&mut self) -> Result<u16, E> {
+    pub fn humidity(&mut self) -> Result<u16, Error<E>> {
         self.i2c
-            .write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])?;
+            .write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])
+            .map_err(Error::I2c)?;
 
         // wait for total conversion time t_conv(RH) + t_conv(T)
         // max(t_conv(RH)) = 12ms
         // max(t_conv(T)) = 10.8ms
         self.delay.delay_ms(23);
 
-        let rh_code = self.read_u16()?;
+        let rh_code = self.read_u16_with_crc()?;
         Ok(convert_humidity(rh_code))
     }
 
     /// Starts a temperature measurement and waits for it to finish before
     /// returning the measured value.
-    pub fn temperature(&mut self) -> Result<i16, E> {
+    pub fn temperature(&mut self) -> Result<i16, Error<E>> {
         self.i2c
-            .write(ADDRESS, &[Command::MeasureTempNoHoldMaster.cmd()])?;
+            .write(ADDRESS, &[Command::MeasureTempNoHoldMaster.cmd()])
+            .map_err(Error::I2c)?;
 
         // wait for temperature conversion time t_conv(T)
         // max(t_conv(T)) = 10.8ms
         self.delay.delay_ms(11);
 
-        let temp_code = self.read_u16()?;
+        let temp_code = self.read_u16_with_crc()?;
         Ok(convert_temperature(temp_code))
     }
 
@@ -210,23 +226,25 @@ where
     /// - `0x14 = 20`: Si7020
     /// - `0x15 = 21`: Si7021
     /// - `0x32 = 50`: HTU21D/SHT21
-    pub fn serial(&mut self) -> Result<[u8; 8], E> {
+    pub fn serial(&mut self) -> Result<[u8; 8], Error<E>> {
         let mut serial = [0u8; 8];
         let mut buffer = [0u8; 8];
-        self.i2c.write(ADDRESS, &[0xFA, 0x0F])?;
-        self.i2c.read(ADDRESS, &mut buffer)?;
+        self.i2c.write(ADDRESS, &[0xFA, 0x0F]).map_err(Error::I2c)?;
+        self.i2c.read(ADDRESS, &mut buffer).map_err(Error::I2c)?;
         serial[0] = buffer[0];
         serial[1] = buffer[2];
         serial[2] = buffer[4];
         serial[3] = buffer[6];
 
         let mut buffer = [0u8; 6];
-        self.i2c.write(ADDRESS, &[0xFC, 0xC9])?;
-        self.i2c.read(ADDRESS, &mut buffer)?;
+        self.i2c.write(ADDRESS, &[0xFC, 0xC9]).map_err(Error::I2c)?;
+        self.i2c.read(ADDRESS, &mut buffer).map_err(Error::I2c)?;
         serial[4] = buffer[0];
         serial[5] = buffer[1];
         serial[6] = buffer[3];
         serial[7] = buffer[4];
+        self.check_crc(&buffer[0..2], buffer[2])?;
+        // self.check_crc(&buffer[3..5], buffer[5])?;
         Ok(serial)
     }
 
@@ -249,6 +267,31 @@ where
         let mut buffer = [0, 0];
         self.i2c.read(ADDRESS, &mut buffer)?;
         Ok(((buffer[0] as u16) << 8) + (buffer[1] as u16))
+    }
+
+    fn read_u16_with_crc(&mut self) -> Result<u16, Error<E>> {
+        let mut buffer = [0u8; 3];
+        self.i2c.read(ADDRESS, &mut buffer).map_err(Error::I2c)?;
+        self.check_crc(&buffer[0..2], buffer[2])?;
+        Ok(((buffer[0] as u16) << 8) + (buffer[1] as u16))
+    }
+
+    fn check_crc(&self, data: &[u8], crc: u8) -> Result<(), Error<E>> {
+        let mut data = (((data[0] as u16) << 8) + (data[1] as u16)) as u32;
+        for _ in 0..16 {
+            if data & 0x8000 != 0 {
+                data = (data << 1) ^ POLYNOMIAL;
+            } else {
+                data <<= 1;
+            }
+        }
+
+        data >>= 8;
+        if data == crc as u32 {
+            Ok(())
+        } else {
+            Err(Error::Crc)
+        }
     }
 }
 

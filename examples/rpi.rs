@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use hal::{Delay, I2cdev};
-use si7021::{Resolution, Si7021, FirmwareVersion};
+use si7021::{FirmwareVersion, HeaterLevel, Resolution, Si7021};
 
 fn main() {
     let dev = I2cdev::new("/dev/i2c-1", si7021::ADDRESS as u16).unwrap();
@@ -27,7 +27,11 @@ fn main() {
 
     for _ in 0..5 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();
-        println!("{:>6.2}% {:6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        println!(
+            "{:>6.2}% {:6.2}°C",
+            humidity as f32 / 100.0,
+            temperature as f32 / 100.0
+        );
         thread::sleep(Duration::from_secs(1));
     }
 
@@ -42,12 +46,16 @@ fn main() {
     println!("{:?}", si7021.get_resolution().unwrap());
 
     println!("Heater on");
-    si7021.set_heater_level(0x0F).unwrap();
+    si7021.set_heater_level(HeaterLevel::L16).unwrap();
     si7021.enable_heater().unwrap();
 
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();
-        println!("{:>6.2}% {:>6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        println!(
+            "{:>6.2}% {:>6.2}°C",
+            humidity as f32 / 100.0,
+            temperature as f32 / 100.0
+        );
         thread::sleep(Duration::from_secs(1));
     }
 
@@ -56,7 +64,11 @@ fn main() {
 
     for _ in 0..10 {
         let (humidity, temperature) = si7021.humidity_temperature().unwrap();
-        println!("{:>6.2}% {:>6.2}°C", humidity as f32 / 100.0, temperature as f32 / 100.0);
+        println!(
+            "{:>6.2}% {:>6.2}°C",
+            humidity as f32 / 100.0,
+            temperature as f32 / 100.0
+        );
         thread::sleep(Duration::from_secs(1));
     }
 }

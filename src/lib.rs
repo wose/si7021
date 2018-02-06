@@ -61,6 +61,51 @@ pub enum FirmwareVersion {
     Unknown(u8),
 }
 
+/// Heater Level
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone)]
+pub enum HeaterLevel {
+    /// Typical Current Draw 3.090 mA @VDD = 3.3V
+    L1 = 0b0000,
+    /// Typical Current Draw 9.164 mA @VDD = 3.3V
+    L2 = 0b0001,
+    /// Typical Current Draw 15.238 mA @VDD = 3.3V
+    L3 = 0b0010,
+    /// Typical Current Draw 21.312 mA @VDD = 3.3V
+    L4 = 0b0011,
+    /// Typical Current Draw 27.386 mA @VDD = 3.3V
+    L5 = 0b0100,
+    /// Typical Current Draw 33.460 mA @VDD = 3.3V
+    L6 = 0b0101,
+    /// Typical Current Draw 39.534 mA @VDD = 3.3V
+    L7 = 0b0110,
+    /// Typical Current Draw 45.608 mA @VDD = 3.3V
+    L8 = 0b0111,
+    /// Typical Current Draw 51.682 mA @VDD = 3.3V
+    L9 = 0b1000,
+    /// Typical Current Draw 57.756 mA @VDD = 3.3V
+    L10 = 0b1001,
+    /// Typical Current Draw 63.830 mA @VDD = 3.3V
+    L11 = 0b1010,
+    /// Typical Current Draw 69.904 mA @VDD = 3.3V
+    L12 = 0b1011,
+    /// Typical Current Draw 75.978 mA @VDD = 3.3V
+    L13 = 0b1100,
+    /// Typical Current Draw 82.052 mA @VDD = 3.3V
+    L14 = 0b1101,
+    /// Typical Current Draw 88.126 mA @VDD = 3.3V
+    L15 = 0b1110,
+    /// Typical Current Draw 94.200 mA @VDD = 3.3V
+    L16 = 0b1111,
+}
+
+impl HeaterLevel {
+    /// Get heater control register value.
+    pub fn value(&self) -> u8 {
+        *self as u8
+    }
+}
+
 /// Measurement Resolution
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
@@ -172,9 +217,9 @@ where
     }
 
     /// Sets the heater level.
-    pub fn set_heater_level(&mut self, level: u8) -> Result<(), E> {
+    pub fn set_heater_level(&mut self, level: HeaterLevel) -> Result<(), E> {
         self.i2c
-            .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level & 0x0F])?;
+            .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level.value()])?;
         Ok(())
     }
 

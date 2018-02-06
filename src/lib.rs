@@ -148,21 +148,17 @@ where
     /// doing a separate temperature measurement.
     pub fn humidity_temperature(&mut self) -> Result<(u16, i16), Error<E>> {
         let humidity = self.humidity()?;
-        self.i2c
-            .write(ADDRESS, &[Command::ReadTempPostHumMeasurement.cmd()])
-            .map_err(Error::I2c)?;
+        self.command(Command::ReadTempPostHumMeasurement)?;
 
         // temperature reading after humidity measurement doesn't support CRC
-        let temperature = convert_temperature(self.read_u16().map_err(Error::I2c)?);
+        let temperature = convert_temperature(self.read_u16()?);
         Ok((humidity, temperature))
     }
 
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value.
     pub fn humidity(&mut self) -> Result<u16, Error<E>> {
-        self.i2c
-            .write(ADDRESS, &[Command::MeasureRelHumNoHoldMaster.cmd()])
-            .map_err(Error::I2c)?;
+        self.command(Command::MeasureRelHumNoHoldMaster)?;
 
         // wait for total conversion time t_conv(RH) + t_conv(T)
         // max(t_conv(RH)) = 12ms
@@ -176,9 +172,7 @@ where
     /// Starts a temperature measurement and waits for it to finish before
     /// returning the measured value.
     pub fn temperature(&mut self) -> Result<i16, Error<E>> {
-        self.i2c
-            .write(ADDRESS, &[Command::MeasureTempNoHoldMaster.cmd()])
-            .map_err(Error::I2c)?;
+        self.command(Command::MeasureTempNoHoldMaster)?;
 
         // wait for temperature conversion time t_conv(T)
         // max(t_conv(T)) = 10.8ms
@@ -189,8 +183,8 @@ where
     }
 
     /// Issues a software reset.
-    pub fn reset(&mut self) -> Result<(), E> {
-        self.i2c.write(ADDRESS, &[Command::Reset.cmd()])?;
+    pub fn reset(&mut self) -> Result<(), Error<E>> {
+        self.command(Command::Reset)?;
         self.delay.delay_ms(15);
         Ok(())
     }
@@ -199,8 +193,7 @@ where
     pub fn set_resolution(&mut self, res: Resolution) -> Result<(), E> {
         let reg = self.read_user_reg()? & 0x7E | res.res();
         self.i2c
-            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
-        Ok(())
+            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])
     }
 
     /// Returns the current measurement resolution.
@@ -219,27 +212,23 @@ where
     /// Sets the heater level.
     pub fn set_heater_level(&mut self, level: HeaterLevel) -> Result<(), E> {
         self.i2c
-            .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level.value()])?;
-        Ok(())
+            .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level.value()])
     }
 
     /// Enables the heater.
     pub fn enable_heater(&mut self) -> Result<(), E> {
-        self.control_heater(0x04)?;
-        Ok(())
+        self.control_heater(0x04)
     }
 
     /// Disables the heater.
     pub fn disable_heater(&mut self) -> Result<(), E> {
-        self.control_heater(0x00)?;
-        Ok(())
+        self.control_heater(0x00)
     }
 
     fn control_heater(&mut self, enable: u8) -> Result<(), E> {
         let reg = self.read_user_reg()? ^ 0x04 | enable;
         self.i2c
-            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])?;
-        Ok(())
+            .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])
     }
 
     /// Returns the VDD Status. If the operating voltage drops below 1.9 V, this
@@ -308,9 +297,9 @@ where
         }
     }
 
-    fn read_u16(&mut self) -> Result<u16, E> {
+    fn read_u16(&mut self) -> Result<u16, Error<E>> {
         let mut buffer = [0, 0];
-        self.i2c.read(ADDRESS, &mut buffer)?;
+        self.i2c.read(ADDRESS, &mut buffer).map_err(Error::I2c)?;
         Ok(((buffer[0] as u16) << 8) + (buffer[1] as u16))
     }
 
@@ -319,6 +308,12 @@ where
         self.i2c.read(ADDRESS, &mut buffer).map_err(Error::I2c)?;
         self.check_crc(&buffer[0..2], buffer[2])?;
         Ok(((buffer[0] as u16) << 8) + (buffer[1] as u16))
+    }
+
+    fn command(&mut self, command: Command) -> Result<(), Error<E>> {
+        self.i2c
+            .write(ADDRESS, &[command.cmd()])
+            .map_err(Error::I2c)
     }
 
     fn check_crc(&self, data: &[u8], crc: u8) -> Result<(), Error<E>> {

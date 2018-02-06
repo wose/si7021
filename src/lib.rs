@@ -106,6 +106,16 @@ impl HeaterLevel {
     }
 }
 
+/// VDD Status
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone)]
+pub enum VddStatus {
+    /// VDD is between 1.8V and 1.9V. If VDD drops below 1.8V, the device will no longer operate correctly.
+    Low,
+    /// VDD is above 1.9V.
+    Ok,
+}
+
 /// Measurement Resolution
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
@@ -234,9 +244,12 @@ where
     /// Returns the VDD Status. If the operating voltage drops below 1.9 V, this
     /// will return `false`. If the operating voltage drops below 1.8 V, the device
     /// will no longer operate correctly.
-    pub fn vdd_status(&mut self) -> Result<bool, E> {
+    pub fn vdd_status(&mut self) -> Result<VddStatus, E> {
         let reg = self.read_user_reg()?;
-        Ok(reg & 0x40 == 0)
+        match reg & 0x40 {
+            0 => Ok(VddStatus::Ok),
+            _ => Ok(VddStatus::Low),
+        }
     }
 
     fn read_user_reg(&mut self) -> Result<u8, E> {

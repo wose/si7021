@@ -236,7 +236,7 @@ where
     }
 
     fn control_heater(&mut self, enable: u8) -> Result<(), E> {
-        let reg = self.read_user_reg()? ^ 0x04 | enable;
+        let reg = self.read_user_reg()? & 0xFB | enable;
         self.i2c
             .write(ADDRESS, &[Command::WriteUserReg1.cmd(), reg])
     }

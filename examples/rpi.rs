@@ -8,7 +8,7 @@ use hal::{Delay, I2cdev};
 use si7021::{FirmwareVersion, HeaterLevel, Resolution, Si7021};
 
 fn main() {
-    let dev = I2cdev::new("/dev/i2c-1", si7021::ADDRESS as u16).unwrap();
+    let dev = I2cdev::new("/dev/i2c-1").unwrap();
     let mut si7021 = Si7021::new(dev, Delay);
 
     print!("SN: ");

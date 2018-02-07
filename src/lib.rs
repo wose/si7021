@@ -110,7 +110,8 @@ impl HeaterLevel {
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub enum VddStatus {
-    /// VDD is between 1.8V and 1.9V. If VDD drops below 1.8V, the device will no longer operate correctly.
+    /// VDD is between 1.8V and 1.9V.
+    /// If VDD drops below 1.8V, the device will no longer operate correctly.
     Low,
     /// VDD is above 1.9V.
     Ok,

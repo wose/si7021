@@ -154,6 +154,11 @@ where
         Si7021 { i2c, delay }
     }
 
+    /// Releases the I2C peripheral and `Delay` resource.
+    pub fn free(self) -> (I2C, D) {
+        (self.i2c, self.delay)
+    }
+
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value together with the temperature without
     /// doing a separate temperature measurement.

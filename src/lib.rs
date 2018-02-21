@@ -13,7 +13,6 @@ extern crate embedded_hal as hal;
 
 use core::cmp;
 
-use hal::blocking::delay::DelayMs;
 use hal::blocking::i2c::{Read, Write, WriteRead};
 
 const POLYNOMIAL: u32 = 0x13100;
@@ -139,19 +138,17 @@ impl Resolution {
 }
 
 /// Si7021 Driver
-pub struct Si7021<I2C, D> {
+pub struct Si7021<I2C> {
     i2c: I2C,
-    delay: D,
 }
 
-impl<I2C, D, E> Si7021<I2C, D>
+impl<I2C, E> Si7021<I2C>
 where
     I2C: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
-    D: DelayMs<u8>,
 {
     /// Creates a new driver from an I2C peripheral.
-    pub fn new(i2c: I2C, delay: D) -> Self {
-        Si7021 { i2c, delay }
+    pub fn new(i2c: I2C) -> Self {
+        Si7021 { i2c }
     }
 
     /// Starts a humidity measurement and waits for it to finish before
@@ -171,13 +168,19 @@ where
     pub fn humidity(&mut self) -> Result<u16, Error<E>> {
         self.command(Command::MeasureRelHumNoHoldMaster)?;
 
-        // wait for total conversion time t_conv(RH) + t_conv(T)
-        // max(t_conv(RH)) = 12ms
-        // max(t_conv(T)) = 10.8ms
-        self.delay.delay_ms(23);
+        // The total conversion time t_conv(RH) + t_conv(T) depends on the
+        // sensor chip. As long as the conversion hasn't finished the sensor
+        // will NAK the read.
 
-        let rh_code = self.read_u16_with_crc()?;
-        Ok(convert_humidity(rh_code))
+        // This looks ugly... is there a better way to check for Ok or a
+        // specific Err?
+        loop {
+            match self.read_u16_with_crc() {
+                Err(Error::Crc) => return Err(Error::Crc),
+                Err(_) => continue,
+                Ok(rh_code) => return Ok(convert_humidity(rh_code)),
+            }
+        }
     }
 
     /// Starts a temperature measurement and waits for it to finish before
@@ -185,18 +188,24 @@ where
     pub fn temperature(&mut self) -> Result<i16, Error<E>> {
         self.command(Command::MeasureTempNoHoldMaster)?;
 
-        // wait for temperature conversion time t_conv(T)
-        // max(t_conv(T)) = 10.8ms
-        self.delay.delay_ms(11);
+        // The temperature conversion time t_conv(T) depends on the sensor
+        // chip. As long as the conversion hasn't finished the sensor will NAK
+        // the read.
 
-        let temp_code = self.read_u16_with_crc()?;
-        Ok(convert_temperature(temp_code))
+        // This looks ugly... is there a better way to check for Ok or a
+        // specific Err?
+        loop {
+            match self.read_u16_with_crc() {
+                Err(Error::Crc) => return Err(Error::Crc),
+                Err(_) => continue,
+                Ok(temp_code) => return Ok(convert_temperature(temp_code)),
+            }
+        }
     }
 
     /// Issues a software reset.
     pub fn reset(&mut self) -> Result<(), Error<E>> {
         self.command(Command::Reset)?;
-        self.delay.delay_ms(15);
         Ok(())
     }
 

@@ -4,12 +4,12 @@ extern crate si7021;
 use std::thread;
 use std::time::Duration;
 
-use hal::{Delay, I2cdev};
+use hal::I2cdev;
 use si7021::{FirmwareVersion, HeaterLevel, Resolution, Si7021};
 
 fn main() {
     let dev = I2cdev::new("/dev/i2c-1").unwrap();
-    let mut si7021 = Si7021::new(dev, Delay);
+    let mut si7021 = Si7021::new(dev);
 
     print!("SN: ");
     for byte in &si7021.serial().unwrap() {
@@ -41,6 +41,7 @@ fn main() {
 
     println!("Reset");
     si7021.reset().unwrap();
+    thread::sleep(Duration::from_millis(15));
 
     println!("Resolution after Reset");
     println!("{:?}", si7021.get_resolution().unwrap());

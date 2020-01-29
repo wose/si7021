@@ -9,11 +9,9 @@
 #![deny(warnings)]
 #![no_std]
 
-extern crate embedded_hal as hal;
-
 use core::cmp;
 
-use hal::blocking::i2c::{Read, Write, WriteRead};
+use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
 
 const POLYNOMIAL: u32 = 0x13100;
 

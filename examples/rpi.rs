@@ -1,10 +1,7 @@
-extern crate linux_embedded_hal as hal;
-extern crate si7021;
-
 use std::thread;
 use std::time::Duration;
 
-use hal::I2cdev;
+use linux_embedded_hal::I2cdev;
 use si7021::{FirmwareVersion, HeaterLevel, Resolution, Si7021};
 
 fn main() {

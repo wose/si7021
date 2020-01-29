@@ -1,6 +1,7 @@
 [package]
 authors = ["Sebastian Woetzel <wose@zuendmasse.de>"]
 categories = ["embedded", "hardware-support", "no-std"]
+edition = "2018"
 description = "A platform agnostic driver to interface with the Si7021 humidity and temperature sensor"
 keywords = ["embedded-hal", "humidity", "temperature"]
 license = "MIT OR Apache-2.0"

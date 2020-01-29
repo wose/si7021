@@ -3,7 +3,7 @@
 //!
 //! This driver was built using [`embedded-hal`] traits.
 //!
-//! [`embedded-hal`]: https://docs.rs/embedded-hal/~0.1
+//! [`embedded-hal`]: https://docs.rs/embedded-hal/
 
 #![deny(missing_docs)]
 #![deny(warnings)]
@@ -36,8 +36,8 @@ enum Command {
 }
 
 impl Command {
-    pub fn cmd(&self) -> u8 {
-        *self as u8
+    pub fn cmd(self) -> u8 {
+        self as u8
     }
 }
 
@@ -100,8 +100,8 @@ pub enum HeaterLevel {
 
 impl HeaterLevel {
     /// Get heater control register value.
-    pub fn value(&self) -> u8 {
-        *self as u8
+    pub fn value(self) -> u8 {
+        self as u8
     }
 }
 
@@ -121,19 +121,19 @@ pub enum VddStatus {
 #[derive(Debug, Copy, Clone)]
 pub enum Resolution {
     /// RH: 12 bit, Temp: 14 bit
-    RH12Temp14 = 0b00000000,
+    RH12Temp14 = 0b0000_0000,
     /// RH: 8 bit, Temp: 12 bit
-    RH8Temp12 = 0b00000001,
+    RH8Temp12 = 0b0000_0001,
     /// RH: 10 bit, Temp: 13 bit
-    RH10Temp13 = 0b10000000,
+    RH10Temp13 = 0b1000_0000,
     /// RH: 11 bit, Temp: 11 bit
-    RH11Temp11 = 0b10000001,
+    RH11Temp11 = 0b1000_0001,
 }
 
 impl Resolution {
     /// Get register value.
-    pub fn res(&self) -> u8 {
-        *self as u8
+    pub fn res(self) -> u8 {
+        self as u8
     }
 }
 

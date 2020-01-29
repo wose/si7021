@@ -9,7 +9,7 @@ repository = "https://github.com/wose/si7021"
 version = "0.1.0"
 
 [dependencies]
-embedded-hal = "0.2.2"
+embedded-hal = "0.2.3"
 
 [dev-dependencies]
-linux-embedded-hal = "0.1.1"
+linux-embedded-hal = "0.3.0"

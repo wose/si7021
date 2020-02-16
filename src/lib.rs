@@ -5,10 +5,6 @@
 //!
 //! [`embedded-hal`]: https://docs.rs/embedded-hal/
 
-#![deny(missing_docs)]
-#![deny(warnings)]
-#![no_std]
-
 use core::cmp;
 
 use embedded_hal::blocking::i2c::{Read, Write, WriteRead};

@@ -45,6 +45,7 @@ pub enum Error<E> {
 }
 
 /// Firmware Version
+#[allow(dead_code)]
 pub enum FirmwareVersion {
     /// Version 1.0
     V1_0,
@@ -94,6 +95,7 @@ pub enum HeaterLevel {
 
 impl HeaterLevel {
     /// Get heater control register value.
+    #[allow(dead_code)]
     pub fn value(self) -> u8 {
         self as u8
     }
@@ -126,6 +128,7 @@ pub enum Resolution {
 
 impl Resolution {
     /// Get register value.
+    #[allow(dead_code)]
     pub fn res(self) -> u8 {
         self as u8
     }
@@ -148,6 +151,7 @@ where
     /// Starts a humidity measurement and waits for it to finish before
     /// returning the measured value together with the temperature without
     /// doing a separate temperature measurement.
+    #[allow(dead_code)]
     pub fn humidity_temperature(&mut self) -> Result<(u16, i16), Error<E>> {
         let humidity = self.humidity()?;
         self.command(Command::ReadTempPostHumMeasurement)?;
@@ -198,12 +202,14 @@ where
     }
 
     /// Issues a software reset.
+    #[allow(dead_code)]
     pub fn reset(&mut self) -> Result<(), Error<E>> {
         self.command(Command::Reset)?;
         Ok(())
     }
 
     /// Sets the measurement resolution.
+    #[allow(dead_code)]
     pub fn set_resolution(&mut self, res: Resolution) -> Result<(), E> {
         let reg = self.read_user_reg()? & 0x7E | res.res();
         self.i2c
@@ -211,6 +217,7 @@ where
     }
 
     /// Returns the current measurement resolution.
+    #[allow(dead_code)]
     pub fn get_resolution(&mut self) -> Result<Resolution, E> {
         let reg = self.read_user_reg()?;
 
@@ -224,17 +231,20 @@ where
     }
 
     /// Sets the heater level.
+    #[allow(dead_code)]
     pub fn set_heater_level(&mut self, level: HeaterLevel) -> Result<(), E> {
         self.i2c
             .write(ADDRESS, &[Command::ReadHeaterCtrlReg.cmd(), level.value()])
     }
 
     /// Enables the heater.
+    #[allow(dead_code)]
     pub fn enable_heater(&mut self) -> Result<(), E> {
         self.control_heater(0x04)
     }
 
     /// Disables the heater.
+    #[allow(dead_code)]
     pub fn disable_heater(&mut self) -> Result<(), E> {
         self.control_heater(0x00)
     }
@@ -248,6 +258,7 @@ where
     /// Returns the VDD Status. If the operating voltage drops below 1.9 V, this
     /// will return `false`. If the operating voltage drops below 1.8 V, the device
     /// will no longer operate correctly.
+    #[allow(dead_code)]
     pub fn vdd_status(&mut self) -> Result<VddStatus, E> {
         let reg = self.read_user_reg()?;
         match reg & 0x40 {
@@ -277,6 +288,7 @@ where
     /// - `0x14 = 20`: Si7020
     /// - `0x15 = 21`: Si7021
     /// - `0x32 = 50`: HTU21D/SHT21
+    #[allow(dead_code)]
     pub fn serial(&mut self) -> Result<[u8; 8], Error<E>> {
         let mut serial = [0u8; 8];
         let mut buffer = [0u8; 8];
@@ -303,6 +315,7 @@ where
     ///
     /// - `0xFF`: Firmware version 1.0
     /// - `0x20`: Firmware version 2.0
+    #[allow(dead_code)]
     pub fn firmware_rev(&mut self) -> Result<FirmwareVersion, E> {
         let mut buffer = [0];
         self.i2c.write(ADDRESS, &[0x84, 0xB8])?;
